@@ -109,6 +109,8 @@ namespace Webapp.Controllers
             return View(product);  // Devuelve la vista de eliminación con el producto a eliminar
         }
 
+        
+
         // Action para eliminar un producto (POST)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]

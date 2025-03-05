@@ -1,143 +1,164 @@
-﻿@model Webapp.Controllers.HomeViewModel
+﻿@model Webapp.ViewModels.HomeViewModel
 
-@{
-    ViewData["Title"] = "Lista De Productos";
-}
 
 @section title {
     <title>@ViewData["Title"]</title>
 }
+<h2>Comprar Productos</h2>
 
-<h2>@ViewData["Title"]</h2>
+<!-- Botón de Agregar Producto -->
+<a href="#" class="btn btn-info mb-3" onclick="showAddProductForm()">Agregar Producto</a>
 
-<!-- Botón para agregar nuevo producto -->
-<p>
-    <button id="addProductBtn" class="btn btn-primary">Agregar Nuevo Producto</button>
-</p>
-
-<!-- Formulario oculto para agregar productos -->
-<div id="addProductForm" style="display: none;">
-    <h3>Agregar Nuevo Producto</h3>
-    <form id="productForm">
-        <div class="mb-3">
-            <label for="name" class="form-label">Nombre del Producto</label>
-            <input type="text" class="form-control" id="name" required>
-        </div>
-        <div class="mb-3">
-            <label for="price" class="form-label">Precio</label>
-            <input type="number" class="form-control" id="price" required>
-        </div>
-        <button type="submit" class="btn btn-success">Guardar Producto</button>
-    </form>
-    </div>
 <!-- Tabla de productos -->
+<h3>Productos Disponibles</h3>
 <table class="table">
     <thead>
         <tr>
-            <th>Id del Producto</th>
-            <th>Producto</th>
+            <th>Nombre</th>
             <th>Precio</th>
-            <th>Accion</th>
+            <th>Stock</th>
+            <th>Acciones</th>
         </tr>
     </thead>
-    <tbody id="productTableBody">
+    <tbody>
         @foreach (var product in Model.Products)
         {
             <tr>
-                <td>@product.ProductId</td>
                 <td>@product.Name</td>
                 <td>@product.Price</td>
+                <td>@product.Stock</td>
                 <td>
-                    <a href="@Url.Action("Edit", "Product", new { id = product.ProductId })" class="btn btn-warning">Editar</a>
-                    <a href="@Url.Action("Delete", "Product", new { id = product.ProductId })" class="btn btn-danger">Borrar</a>
+                    <button class="btn btn-success" onclick="buyProduct(@product.ProductId)">Comprar</button>
+                    <button class="btn btn-warning" onclick="editProduct(@product.ProductId, '@product.Name', @product.Price, @product.Stock)">Editar</button>
+                    <button class="btn btn-danger" onclick="deleteProduct(@product.ProductId)">Eliminar</button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
-<!-- Tabla de Categoria-->
-<h3>Categorías</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Id de Categoría</th>
-            <th>Nombre</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var category in Model.Categories)
-        {
-            <tr>
-                <td>@category.CategoryId</td>
-                <td>@category.Name</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<!-- Formulario de Agregar Producto -->
+<div id="addProductForm" style="display:none;">
+    <h3>Agregar Producto</h3>
+    <input type="text" id="productName" placeholder="Nombre" class="form-control mb-2">
+    <input type="number" id="productPrice" placeholder="Precio" class="form-control mb-2">
+    <input type="number" id="productStock" placeholder="Stock" class="form-control mb-2">
+    <button class="btn btn-primary" onclick="addProduct()">Guardar Producto</button>
+    <button class="btn btn-secondary" onclick="hideAddProductForm()">Cancelar</button>
+</div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Formulario de Editar Producto -->
+<div id="editProductForm" style="display:none;">
+    <h3>Editar Producto</h3>
+    <input type="hidden" id="editProductId">
+    <input type="text" id="editProductName" class="form-control mb-2">
+    <input type="number" id="editProductPrice" class="form-control mb-2">
+    <input type="number" id="editProductStock" class="form-control mb-2">
+    <button class="btn btn-success" onclick="updateProduct()">Actualizar</button>
+    <button class="btn btn-secondary" onclick="hideEditProductForm()">Cancelar</button>
+</div>
+
 <script>
-    $(document).ready(function () {
-        $("#addProductBtn").click(function () {
-            $("#addProductForm").toggle();
+    // Mostrar y ocultar formularios
+    function showAddProductForm() {
+        document.getElementById("addProductForm").style.display = "block";
+    }
+    function hideAddProductForm() {
+        document.getElementById("addProductForm").style.display = "none";
+    }
+    function showEditProductForm() {
+        document.getElementById("editProductForm").style.display = "block";
+    }
+    function hideEditProductForm() {
+        document.getElementById("editProductForm").style.display = "none";
+    }
+
+    // Agregar Producto
+    function addProduct() {
+        let name = document.getElementById("productName").value;
+        let price = document.getElementById("productPrice").value;
+        let stock = document.getElementById("productStock").value;
+
+        fetch('/Home/AddProduct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Name: name, Price: price, Stock: stock })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Producto agregado con éxito.');
+                location.reload();
+            } else {
+                alert('Error al agregar producto.');
+            }
         });
+    }
 
-        $("#saveProductBtn").click(function () {
-            var name = $("#productName").val();
-            var price = $("#productPrice").val();
+    // Editar Producto
+    function editProduct(id, name, price, stock) {
+        document.getElementById("editProductId").value = id;
+        document.getElementById("editProductName").value = name;
+        document.getElementById("editProductPrice").value = price;
+        document.getElementById("editProductStock").value = stock;
+        showEditProductForm();
+    }
 
-            $.ajax({
-                url: "/Product/CreateAjax",
-                method: "POST",
-                data: { Name: name, Price: price },
-                success: function (response) {
-                    $("#productTableBody").append(`
-                        <tr>
-                            <td>${response.productId}</td>
-                            <td>${response.name}</td>
-                            <td>${response.price}</td>
-                            <td>
-                                <a href='/Product/Edit?id=${response.productId}' class='btn btn-warning'>Editar</a>
-                                <a href='/Product/Delete?id=${response.productId}' class='btn btn-danger'>Borrar</a>
-                            </td>
-                        </tr>
-                    `);
-                    $("#addProductForm").hide();
-                    $("#productName").val("");
-                    $("#productPrice").val("");
-                }
-            });
+    function updateProduct() {
+        let id = document.getElementById("editProductId").value;
+        let name = document.getElementById("editProductName").value;
+        let price = document.getElementById("editProductPrice").value;
+        let stock = document.getElementById("editProductStock").value;
+
+        fetch('/Home/EditProduct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ProductId: id, Name: name, Price: price, Stock: stock })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Producto actualizado con éxito.');
+                location.reload();
+            } else {
+                alert('Error al actualizar producto.');
+            }
         });
-    });
+    }
+        function buyProduct(productId) {
+        fetch('/Home/BuyProduct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Producto comprado con éxito. Nuevo stock: ${data.newStock}`);
+                location.reload(); // Recargar la página para actualizar el stock
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    // Eliminar Producto
+    function deleteProduct(productId) {
+        if (!confirm("¿Seguro que deseas eliminar este producto?")) return;
 
-        document.getElementById("productForm").addEventListener("submit", function (event) {
-            event.preventDefault(); // Evita que la página se recargue
-
-            var name = document.getElementById("name").value;
-            var price = document.getElementById("price").value;
-
-            fetch("/Home/AddProduct", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ name: name, price: parseFloat(price) })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    let table = document.querySelector("tbody");
-                    let newRow = table.insertRow();
-                    newRow.innerHTML = `<td>${data.productId}</td><td>${name}</td><td>${price}</td>
-                                        <td><a href="#" class="btn btn-warning">Editar</a>
-                                            <a href="#" class="btn btn-danger">Borrar</a></td>`;
-
-                    // Limpiar formulario
-                    document.getElementById("name").value = "";
-                    document.getElementById("price").value = "";
-                }
-            })
-            .catch(error => console.error("Error:", error));
+        fetch('/Home/DeleteProduct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ProductId: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Producto eliminado.');
+                location.reload();
+            } else {
+                alert('Error al eliminar producto.');
+            }
         });
+    }
 </script>

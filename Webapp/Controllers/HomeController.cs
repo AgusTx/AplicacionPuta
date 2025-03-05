@@ -2,11 +2,15 @@
 using Webapp.Data;
 using Webapp.Models;
 using System.Linq;
+using Webapp.ViewModels;
+
 
 namespace Webapp.Controllers
 {
     public class HomeController : Controller
     {
+
+
         private readonly ApplicationDbContext _context;
 
         public HomeController(ApplicationDbContext context)
@@ -14,9 +18,11 @@ namespace Webapp.Controllers
             _context = context;
         }
 
+
+
         public IActionResult Index()
         {
-            var categories = _context.Categories.ToList(); // Obtener categorías
+            var categories = _context.Categories.ToList();
             var availableProducts = _context.Products.Where(p => p.Stock > 0).ToList(); // Solo productos con stock
 
             var viewModel = new HomeViewModel
@@ -27,20 +33,85 @@ namespace Webapp.Controllers
 
             return View(viewModel);
         }
-
         [HttpPost]
-        public IActionResult AddProduct([FromBody] Product product)
+        public JsonResult BuyProduct([FromBody] BuyProductRequest request)
         {
-            if (product != null && !string.IsNullOrEmpty(product.Name) && product.Price > 0)
+            if (request == null || request.ProductId <= 0)
             {
-                _context.Products.Add(product);
-                _context.SaveChanges();
-
-                return Json(new { success = true, productId = product.ProductId });
+                return Json(new { success = false, message = "ID de producto inválido." });
             }
-            return Json(new { success = false });
+
+            var product = _context.Products.FirstOrDefault(p => p.ProductId == request.ProductId);
+
+            if (product == null)
+            {
+                return Json(new { success = false, message = "Producto no encontrado." });
+            }
+
+            if (product.Stock <= 0)
+            {
+                return Json(new { success = false, message = "Producto sin stock." });
+            }
+
+            product.Stock--; // Reducir stock
+            _context.SaveChanges();
+
+            return Json(new { success = true, newStock = product.Stock });
         }
 
+        [HttpPost]
+        public JsonResult AddProduct([FromBody] Product product)
+        {
+            if (product == null || string.IsNullOrEmpty(product.Name) || product.Price <= 0 || product.Stock < 0)
+                return Json(new { success = false, message = "Datos inválidos." });
+
+            _context.Products.Add(product);
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public JsonResult EditProduct([FromBody] Product updatedProduct)
+        {
+            var product = _context.Products.FirstOrDefault(p => p.ProductId == updatedProduct.ProductId);
+            if (product == null)
+                return Json(new { success = false, message = "Producto no encontrado." });
+
+            product.Name = updatedProduct.Name;
+            product.Price = updatedProduct.Price;
+            product.Stock = updatedProduct.Stock;
+
+            _context.SaveChanges();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public JsonResult DeleteProduct([FromBody] BuyProductRequest request)
+        {
+            var product = _context.Products.FirstOrDefault(p => p.ProductId == request.ProductId);
+            if (product == null)
+                return Json(new { success = false, message = "Producto no encontrado." });
+
+            _context.Products.Remove(product);
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
+        //[HttpPost]
+        //public IActionResult AddProduct([FromBody] Product product)
+        //{
+        //    if (product != null && !string.IsNullOrEmpty(product.Name) && product.Price > 0 && product.Stock >= 0)
+        //    {
+        //        _context.Products.Add(product);
+        //        _context.SaveChanges();
+
+        //        return Json(new { success = true, productId = product.ProductId });
+        //    }
+
+        //    return Json(new { success = false });
+        //}
         [HttpPost]
         public JsonResult CreateAjax(string name, decimal price, int stock)
         {
@@ -56,11 +127,9 @@ namespace Webapp.Controllers
             var products = _context.Products.ToList();
             return PartialView("_ProductList", products);
         }
+
+      
     }
 
-    public class HomeViewModel
-    {
-        public List<Category> Categories { get; set; }
-        public List<Product> Products { get; set; }
-    }
+    
 }

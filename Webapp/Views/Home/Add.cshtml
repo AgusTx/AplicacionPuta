@@ -1,0 +1,44 @@
+﻿@{
+    ViewData["Title"] = "Agregar Producto";
+}
+
+<h2>Agregar Nuevo Producto</h2>
+
+<form id="addProductForm">
+    <input type="text" id="productName" placeholder="Nombre del Producto" required />
+    <input type="number" id="productPrice" placeholder="Precio" required />
+    <input type="number" id="productStock" placeholder="Stock" required />
+    <button type="submit" class="btn btn-info">Agregar Producto</button>
+</form>
+
+<script>
+    // Manejo del formulario para agregar un nuevo producto
+    document.getElementById('addProductForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const productName = document.getElementById('productName').value;
+        const productPrice = document.getElementById('productPrice').value;
+        const productStock = document.getElementById('productStock').value;
+
+        fetch('/Home/AddProduct', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: productName,
+                price: productPrice,
+                stock: productStock
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Producto agregado exitosamente.');
+                location.href = "/Home/Index"; // Redirige de vuelta a la página de inicio
+            } else {
+                alert('Error al agregar el producto.');
+            }
+        });
+    });
+</script>

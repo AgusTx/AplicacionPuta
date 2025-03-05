@@ -12,8 +12,10 @@
 <table class="table">
     <thead>
         <tr>
-            <th>Nombre</th>
+            <th>Id del Producto</th>
+            <th>Producto</th>
             <th>Precio</th>
+            <th>Stock</th> <!-- 🔹 Nueva columna -->
             <th>Acciones</th>
         </tr>
     </thead>
@@ -21,11 +23,14 @@
         @foreach (var product in Model)
         {
             <tr>
+                <td>@product.ProductId</td>
                 <td>@product.Name</td>
                 <td>@product.Price</td>
+                <td>@product.Stock</td> <!-- 🔹 Mostrar stock -->
                 <td>
-                    <a href="@Url.Action("Edit", "Product", new { id = product.ProductId })">Edit</a> |
-                    <a href="@Url.Action("Delete", "Product", new { id = product.ProductId })">Delete</a>
+                    <a href="@Url.Action("Edit", "Product", new { id = product.ProductId })" class="btn btn-warning">Editar</a>
+                    <a href="@Url.Action("Delete", "Product", new { id = product.ProductId })" class="btn btn-danger">Borrar</a>
+                    <button class="btn btn-success" onclick="addToCart(@product.ProductId)">Comprar</button> <!-- 🔹 Botón para comprar -->
                 </td>
             </tr>
         }
@@ -33,3 +38,10 @@
 </table>
 
 <a href="@Url.Action("Create", "Product")" class="btn btn-primary">Crear nuevo Producto</a>
+
+<script>
+    function addToCart(productId) {
+        // Simulación de lógica de compra (puedes expandir esto para interactuar con un carrito real)
+        alert("Producto agregado al carrito: " + productId);
+    }
+</script>
