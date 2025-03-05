@@ -1,30 +1,30 @@
 ﻿@model Webapp.Models.Product
 
 @{
-    ViewData["Title"] = "Create Product";
+    ViewData["Title"] = "Crear Producto";
 }
 
 @section title {
-    <h1>Create Product</h1>
+    <h1>Crear Producto</h1>
 }
 
-<h4>Create a New Product</h4>
+<h4>Nuevo Producto</h4>
 <hr />
 
 <form asp-action="Create" method="post">
     <div class="form-group">
-        <label for="Name">Product Name</label>
+        <label for="Name">Producto</label>
         <input type="text" id="Name" name="Name" class="form-control" value="@Model?.Name" required />
     </div>
 
     <div class="form-group">
-        <label for="Price">Price</label>
+        <label for="Price">Precio</label>
         <input type="number" id="Price" name="Price" class="form-control" value="@Model?.Price" required step="0.01" min="0" />
     </div>
 
     <div class="form-group">
-        <button type="submit" class="btn btn-primary">Create Product</button>
+        <button type="submit" class="btn btn-primary">Crear Producto</button>
     </div>
 </form>
 
-<a href="@Url.Action("Index", "Product")" class="btn btn-secondary">Back to Product List</a>
+<a href="@Url.Action("Index", "Product")" class="btn btn-secondary">Regresar a la Lista</a>
