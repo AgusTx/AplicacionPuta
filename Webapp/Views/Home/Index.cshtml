@@ -1,5 +1,7 @@
-﻿@{
-    ViewData["Title"] = "Product List";
+﻿@model Webapp.Controllers.HomeViewModel
+
+@{
+    ViewData["Title"] = "Lista De Productos";
 }
 
 @section title {
@@ -10,33 +12,132 @@
 
 <!-- Botón para agregar nuevo producto -->
 <p>
-    <a href="@Url.Action("Create", "Product")" class="btn btn-primary">Add New Product</a>
+    <button id="addProductBtn" class="btn btn-primary">Agregar Nuevo Producto</button>
 </p>
 
+<!-- Formulario oculto para agregar productos -->
+<div id="addProductForm" style="display: none;">
+    <h3>Agregar Nuevo Producto</h3>
+    <form id="productForm">
+        <div class="mb-3">
+            <label for="name" class="form-label">Nombre del Producto</label>
+            <input type="text" class="form-control" id="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">Precio</label>
+            <input type="number" class="form-control" id="price" required>
+        </div>
+        <button type="submit" class="btn btn-success">Guardar Producto</button>
+    </form>
+    </div>
 <!-- Tabla de productos -->
 <table class="table">
     <thead>
         <tr>
-            <th>Product ID</th>
-            <th>Product Name</th>
-            <th>Price</th>
-            <th>Actions</th>
+            <th>Id del Producto</th>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Accion</th>
         </tr>
     </thead>
-    <tbody>
-        @foreach (var product in Model)
+    <tbody id="productTableBody">
+        @foreach (var product in Model.Products)
         {
             <tr>
                 <td>@product.ProductId</td>
                 <td>@product.Name</td>
                 <td>@product.Price</td>
                 <td>
-                    <!-- Edit Link -->
-                    <a href="@Url.Action("Edit", "Product", new { id = product.ProductId })" class="btn btn-warning">Edit</a>
-                    <!-- Delete Link -->
-                    <a href="@Url.Action("Delete", "Product", new { id = product.ProductId })" class="btn btn-danger">Delete</a>
+                    <a href="@Url.Action("Edit", "Product", new { id = product.ProductId })" class="btn btn-warning">Editar</a>
+                    <a href="@Url.Action("Delete", "Product", new { id = product.ProductId })" class="btn btn-danger">Borrar</a>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+<!-- Tabla de Categoria-->
+<h3>Categorías</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id de Categoría</th>
+            <th>Nombre</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var category in Model.Categories)
+        {
+            <tr>
+                <td>@category.CategoryId</td>
+                <td>@category.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#addProductBtn").click(function () {
+            $("#addProductForm").toggle();
+        });
+
+        $("#saveProductBtn").click(function () {
+            var name = $("#productName").val();
+            var price = $("#productPrice").val();
+
+            $.ajax({
+                url: "/Product/CreateAjax",
+                method: "POST",
+                data: { Name: name, Price: price },
+                success: function (response) {
+                    $("#productTableBody").append(`
+                        <tr>
+                            <td>${response.productId}</td>
+                            <td>${response.name}</td>
+                            <td>${response.price}</td>
+                            <td>
+                                <a href='/Product/Edit?id=${response.productId}' class='btn btn-warning'>Editar</a>
+                                <a href='/Product/Delete?id=${response.productId}' class='btn btn-danger'>Borrar</a>
+                            </td>
+                        </tr>
+                    `);
+                    $("#addProductForm").hide();
+                    $("#productName").val("");
+                    $("#productPrice").val("");
+                }
+            });
+        });
+    });
+
+        document.getElementById("productForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Evita que la página se recargue
+
+            var name = document.getElementById("name").value;
+            var price = document.getElementById("price").value;
+
+            fetch("/Home/AddProduct", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name: name, price: parseFloat(price) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let table = document.querySelector("tbody");
+                    let newRow = table.insertRow();
+                    newRow.innerHTML = `<td>${data.productId}</td><td>${name}</td><td>${price}</td>
+                                        <td><a href="#" class="btn btn-warning">Editar</a>
+                                            <a href="#" class="btn btn-danger">Borrar</a></td>`;
+
+                    // Limpiar formulario
+                    document.getElementById("name").value = "";
+                    document.getElementById("price").value = "";
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+</script>

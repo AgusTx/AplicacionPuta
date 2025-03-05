@@ -7,6 +7,7 @@ namespace Webapp.Controllers
 {
     public class ProductController : Controller
     {
+       
         private readonly ApplicationDbContext _context;
 
         public ProductController(ApplicationDbContext context)
@@ -24,7 +25,7 @@ namespace Webapp.Controllers
         // Action para agregar un nuevo producto (GET)
         public IActionResult Create()
         {
-            return View();  // Devuelve la vista de Create.cshtml
+            return View(new Product()); // Asegura que la vista siempre reciba un modelo válido
         }
 
         // Action para agregar un nuevo producto (POST)
